@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X One-Tap Block
 // @namespace    taq.x-one-tap-block
-// @version      1.2
+// @version      1.3
 // @description  タイムラインの各ポストに🚫ボタンを追加。1タップでブロック（メニュー→ブロック→確認 を自動で踏む）
 // @match        https://x.com/*
 // @match        https://twitter.com/*
@@ -20,15 +20,21 @@
   // 処理中はメニューと確認ダイアログを透明化して「1タップ」に見せる
   const style = document.createElement('style');
   style.textContent = `
+    /* Xの「…」「Grok」と同じ寸法：アイコン18.75px、隣との間隔8px、ホバー円は疑似要素で外側に広げる */
     .${BTN_CLASS} {
-      display: flex; align-items: center; justify-content: center;
-      width: 34.75px; height: 34.75px; margin: -8px 0;
-      background: none; border: none; padding: 0; cursor: pointer;
-      border-radius: 9999px; color: rgb(113, 118, 123);
-      transition: color .15s, background-color .15s;
+      position: relative; display: flex; align-items: center; justify-content: center;
+      width: 18.75px; height: 20px; margin: 0 8px 0 0; padding: 0;
+      background: none; border: none; outline: none; cursor: pointer;
+      color: rgb(113, 118, 123); transition: color .2s;
     }
-    .${BTN_CLASS} svg { width: 18.75px; height: 18.75px; fill: currentColor; }
-    .${BTN_CLASS}:hover { color: rgb(244, 33, 46); background-color: rgba(244, 33, 46, .1); }
+    .${BTN_CLASS}::before {
+      content: ''; position: absolute; inset: -8px; border-radius: 9999px;
+      background-color: transparent; transition: background-color .2s;
+    }
+    .${BTN_CLASS} svg { width: 18.75px; height: 18.75px; position: relative; }
+    .${BTN_CLASS}:hover { color: rgb(244, 33, 46); }
+    .${BTN_CLASS}:hover::before { background-color: rgba(244, 33, 46, .1); }
+    .${BTN_CLASS}:focus-visible::before { box-shadow: 0 0 0 2px rgba(244, 33, 46, .5); }
     .${BTN_CLASS}[data-state="warn"] { color: rgb(255, 212, 0); }
     body.${BUSY_CLASS} [role="menu"],
     body.${BUSY_CLASS} [data-testid="Dropdown"],
@@ -38,16 +44,19 @@
   `;
   document.head.appendChild(style);
 
-  // 禁止アイコン（innerHTMLはTrusted Typesで弾かれ得るのでDOMで組み立てる）
-  const ICON_PATH = 'M12 3.75c-4.55 0-8.25 3.69-8.25 8.25 0 1.92.66 3.68 1.75 5.08L17.09 5.5C15.68 4.4 13.92 3.75 12 3.75zm6.5 3.17L6.92 18.5c1.4 1.1 3.16 1.75 5.08 1.75 4.56 0 8.25-3.69 8.25-8.25 0-1.92-.65-3.68-1.75-5.08zM1.75 12C1.75 6.34 6.34 1.75 12 1.75S22.25 6.34 22.25 12 17.66 22.25 12 22.25 1.75 17.66 1.75 12z';
+  // 禁止アイコン（線の太さをXの他アイコンに合わせる。innerHTMLはTrusted Typesで弾かれ得るのでDOMで組み立てる）
   function makeIcon() {
     const NS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('aria-hidden', 'true');
-    const path = document.createElementNS(NS, 'path');
-    path.setAttribute('d', ICON_PATH);
-    svg.appendChild(path);
+    for (const [k, v] of Object.entries({
+      viewBox: '0 0 24 24', 'aria-hidden': 'true', fill: 'none',
+      stroke: 'currentColor', 'stroke-width': '1.75', 'stroke-linecap': 'round',
+    })) svg.setAttribute(k, v);
+    const circle = document.createElementNS(NS, 'circle');
+    circle.setAttribute('cx', '12'); circle.setAttribute('cy', '12'); circle.setAttribute('r', '8.25');
+    const slash = document.createElementNS(NS, 'path');
+    slash.setAttribute('d', 'M6.2 6.2l11.6 11.6');
+    svg.append(circle, slash);
     return svg;
   }
 
