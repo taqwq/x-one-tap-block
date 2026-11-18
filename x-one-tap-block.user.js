@@ -1,12 +1,14 @@
 // ==UserScript==
 // @name         X One-Tap Block
 // @namespace    taq.x-one-tap-block
-// @version      1.1
+// @version      1.2
 // @description  タイムラインの各ポストに🚫ボタンを追加。1タップでブロック（メニュー→ブロック→確認 を自動で踏む）
 // @match        https://x.com/*
 // @match        https://twitter.com/*
 // @run-at       document-idle
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/taqwq/x-one-tap-block/main/x-one-tap-block.user.js
+// @downloadURL  https://raw.githubusercontent.com/taqwq/x-one-tap-block/main/x-one-tap-block.user.js
 // ==/UserScript==
 
 (() => {
